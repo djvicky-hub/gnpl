@@ -139,14 +139,24 @@
       align-items: center;
       justify-content: center;
     }
+    /* Expanded admin-panel-card for player management */
     .admin-panel-card {
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 4px 32px rgba(60,72,100,0.13);
       padding: 2rem 2.2rem 1.2rem 2.2rem;
-      min-width: 340px;
-      max-width: 99vw;
-      width: 420px;
+      min-width: 700px;
+      max-width: 98vw;
+      width: 950px;
+      transition: width 0.2s;
+    }
+    @media (max-width: 1100px) {
+      .admin-panel-card { min-width: 95vw; width: 99vw; }
+    }
+    @media (max-width: 600px) {
+      .hero-title { font-size: 1.28rem; left: 16px; bottom: 13px;}
+      .main-content { padding: 0 0.2rem; }
+      .admin-panel-card { padding: 1.1rem 0.5rem; min-width: 95vw; width: 99vw;}
     }
     .close-modal-btn {
       position: absolute;
@@ -157,15 +167,6 @@
       background: none;
       border: none;
       cursor: pointer;
-    }
-    .stats-section { margin-top: 1.5rem;}
-    .stats-table th, .stats-table td {
-      text-align: center;
-      vertical-align: middle;
-    }
-    .btn-outline-primary {
-      border-radius: 7px;
-      font-weight: 500;
     }
     .admin-tabs {
       margin-bottom: 1rem;
@@ -213,11 +214,22 @@
       padding: 0.3em 0.7em;
       font-size: 0.98rem;
     }
-    @media (max-width: 600px) {
-      .hero-title { font-size: 1.28rem; left: 16px; bottom: 13px;}
-      .main-content { padding: 0 0.2rem; }
-      .admin-panel-card { padding: 1.1rem 0.5rem; }
-      .admin-review-table th, .admin-review-table td { font-size: 0.95em; }
+    .admin-management-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+    .admin-management-col {
+      flex: 1 1 340px;
+      min-width: 320px;
+      max-width: 470px;
+    }
+    .admin-management-section {
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .admin-management-grid { flex-direction: column; gap: 0.7rem; }
+      .admin-management-col { min-width: 0; max-width: 100%; }
     }
   </style>
 </head>
@@ -262,44 +274,50 @@
             Admin Panel
             <button id="logoutBtn" class="btn btn-outline-secondary btn-sm">Logout</button>
           </h5>
-          <!-- Bulk Add Players -->
-          <div class="mb-3">
-            <label for="bulkAddTeamName" class="form-label">Team</label>
-            <input id="bulkAddTeamName" class="form-control mb-2" placeholder="Team name">
-            <label for="bulkAddPlayerNames" class="form-label">Player names (comma or newline separated)</label>
-            <textarea id="bulkAddPlayerNames" class="form-control mb-2" placeholder="e.g. John Doe, Jane Smith&#10;or one per line"></textarea>
-            <button class="btn btn-outline-primary w-100" id="bulkAddPlayersBtn" type="button">
-              <i class="bi bi-person-plus"></i> Add Players
-            </button>
+          <div class="admin-management-grid">
+            <div class="admin-management-col">
+              <div class="admin-management-section mb-3">
+                <label for="bulkAddTeamName" class="form-label">Team</label>
+                <input id="bulkAddTeamName" class="form-control mb-2" placeholder="Team name">
+                <label for="bulkAddPlayerNames" class="form-label">Player names (comma or newline separated)</label>
+                <textarea id="bulkAddPlayerNames" class="form-control mb-2" placeholder="e.g. John Doe, Jane Smith&#10;or one per line"></textarea>
+                <button class="btn btn-outline-primary w-100" id="bulkAddPlayersBtn" type="button">
+                  <i class="bi bi-person-plus"></i> Add Players
+                </button>
+              </div>
+              <div class="admin-management-section mb-3">
+                <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
+                  <input class="form-control" name="teamA" placeholder="Team A" required>
+                  <input class="form-control" name="teamB" placeholder="Team B" required>
+                  <input class="form-control" name="matchDateTime" type="datetime-local" required>
+                  <button class="btn btn-outline-success" type="submit"><i class="bi bi-calendar-plus"></i> Create Match</button>
+                </form>
+                <form id="updateMatchScoreForm" class="input-group mb-2" autocomplete="off">
+                  <input class="form-control" name="matchId" placeholder="Match ID" required>
+                  <input class="form-control" name="playerName" placeholder="Player" required>
+                  <input class="form-control" name="runs" type="number" placeholder="Runs">
+                  <input class="form-control" name="wickets" type="number" placeholder="Wickets">
+                  <button class="btn btn-outline-primary" type="submit"><i class="bi bi-pencil"></i> Update Score</button>
+                </form>
+                <form id="setMatchResultForm" class="input-group mb-2" autocomplete="off">
+                  <input class="form-control" name="matchId" placeholder="Match ID" required>
+                  <input class="form-control" name="winner" placeholder="Winning Team" required>
+                  <button class="btn btn-outline-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
+                </form>
+                <form id="adminActionsForm" class="d-flex gap-2 mb-3">
+                  <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+                  <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
+                </form>
+              </div>
+            </div>
+            <div class="admin-management-col">
+              <div class="admin-management-section mb-3">
+                <label class="form-label">Players by Team</label>
+                <select id="playerListTeamSelect" class="form-select mb-2"></select>
+                <ul class="list-group" id="playerListUl"></ul>
+              </div>
+            </div>
           </div>
-          <!-- Player List Per Team -->
-          <div class="mb-3">
-            <label class="form-label">Players by Team</label>
-            <select id="playerListTeamSelect" class="form-select mb-2"></select>
-            <ul class="list-group" id="playerListUl"></ul>
-          </div>
-          <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
-            <input class="form-control" name="teamA" placeholder="Team A" required>
-            <input class="form-control" name="teamB" placeholder="Team B" required>
-            <input class="form-control" name="matchDateTime" type="datetime-local" required>
-            <button class="btn btn-outline-success" type="submit"><i class="bi bi-calendar-plus"></i> Create Match</button>
-          </form>
-          <form id="updateMatchScoreForm" class="input-group mb-2" autocomplete="off">
-            <input class="form-control" name="matchId" placeholder="Match ID" required>
-            <input class="form-control" name="playerName" placeholder="Player" required>
-            <input class="form-control" name="runs" type="number" placeholder="Runs">
-            <input class="form-control" name="wickets" type="number" placeholder="Wickets">
-            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-pencil"></i> Update Score</button>
-          </form>
-          <form id="setMatchResultForm" class="input-group mb-2" autocomplete="off">
-            <input class="form-control" name="matchId" placeholder="Match ID" required>
-            <input class="form-control" name="winner" placeholder="Winning Team" required>
-            <button class="btn btn-outline-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
-          </form>
-          <form id="adminActionsForm" class="d-flex gap-2 mb-3">
-            <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-            <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
-          </form>
         </div>
         <div id="adminTabReviewPanel" class="d-none">
           <div class="d-flex justify-content-between align-items-center mb-2">
