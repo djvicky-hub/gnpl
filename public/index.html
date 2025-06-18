@@ -144,8 +144,9 @@
       border-radius: 12px;
       box-shadow: 0 4px 32px rgba(60,72,100,0.13);
       padding: 2rem 2.2rem 1.2rem 2.2rem;
-      min-width: 320px;
-      max-width: 95vw;
+      min-width: 340px;
+      max-width: 99vw;
+      width: 420px;
     }
     .close-modal-btn {
       position: absolute;
@@ -166,10 +167,57 @@
       border-radius: 7px;
       font-weight: 500;
     }
+    .admin-tabs {
+      margin-bottom: 1rem;
+    }
+    .admin-tab-btn {
+      background: none;
+      border: none;
+      font-weight: 600;
+      color: #2072b8;
+      font-size: 1.07rem;
+      margin-right: 1.3em;
+      cursor: pointer;
+      padding: 0.2em 0.8em 0.2em 0.8em;
+      border-radius: 7px 7px 0 0;
+      transition: color 0.16s, background 0.16s;
+    }
+    .admin-tab-btn.active, .admin-tab-btn:focus {
+      color: #fff;
+      background: linear-gradient(90deg, #1976d2 0%, #21b6ff 100%);
+    }
+    .admin-review-table {
+      width: 100%;
+      margin-bottom: 1.5em;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 0.98rem;
+      background: #f7fafd;
+    }
+    .admin-review-table thead {
+      background: #e3eaf5;
+      font-family: inherit;
+    }
+    .admin-review-table th, .admin-review-table td {
+      padding: 0.45em 0.85em;
+      border-bottom: 1px solid #e7eaf0;
+    }
+    .admin-review-table tr:last-child td {
+      border-bottom: none;
+    }
+    .admin-player-search {
+      margin-bottom: 1em;
+      width: 100%;
+      border-radius: 7px;
+      border: 1px solid #cce2fa;
+      padding: 0.3em 0.7em;
+      font-size: 0.98rem;
+    }
     @media (max-width: 600px) {
       .hero-title { font-size: 1.28rem; left: 16px; bottom: 13px;}
       .main-content { padding: 0 0.2rem; }
       .admin-panel-card { padding: 1.1rem 0.5rem; }
+      .admin-review-table th, .admin-review-table td { font-size: 0.95em; }
     }
   </style>
 </head>
@@ -205,42 +253,70 @@
         </form>
       </div>
       <div id="adminPanelContent" class="d-none">
-        <h5 class="mb-3 d-flex justify-content-between align-items-center">
-          Admin Panel
-          <button id="logoutBtn" class="btn btn-outline-secondary btn-sm">Logout</button>
-        </h5>
-        <form id="adminActionsForm" class="d-flex gap-2 mb-3">
-          <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-          <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
-        </form>
-        <form id="addPlayerForm" class="input-group mb-2" autocomplete="off">
-          <input class="form-control" name="teamName" placeholder="Team" required>
-          <input class="form-control" name="playerName" placeholder="Player name" required>
-          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-person-plus"></i> Add Player</button>
-        </form>
-        <form id="removePlayerForm" class="input-group mb-2" autocomplete="off">
-          <input class="form-control" name="teamName" placeholder="Team" required>
-          <input class="form-control" name="playerName" placeholder="Player name" required>
-          <button class="btn btn-outline-danger" type="submit"><i class="bi bi-person-dash"></i> Remove Player</button>
-        </form>
-        <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
-          <input class="form-control" name="teamA" placeholder="Team A" required>
-          <input class="form-control" name="teamB" placeholder="Team B" required>
-          <input class="form-control" name="matchDateTime" type="datetime-local" required>
-          <button class="btn btn-outline-success" type="submit"><i class="bi bi-calendar-plus"></i> Create Match</button>
-        </form>
-        <form id="updateMatchScoreForm" class="input-group mb-2" autocomplete="off">
-          <input class="form-control" name="matchId" placeholder="Match ID" required>
-          <input class="form-control" name="playerName" placeholder="Player" required>
-          <input class="form-control" name="runs" type="number" placeholder="Runs">
-          <input class="form-control" name="wickets" type="number" placeholder="Wickets">
-          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-pencil"></i> Update Score</button>
-        </form>
-        <form id="setMatchResultForm" class="input-group mb-2" autocomplete="off">
-          <input class="form-control" name="matchId" placeholder="Match ID" required>
-          <input class="form-control" name="winner" placeholder="Winning Team" required>
-          <button class="btn btn-outline-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
-        </form>
+        <div class="admin-tabs d-flex mb-3">
+          <button id="adminTabManage" class="admin-tab-btn active" type="button">Manage</button>
+          <button id="adminTabReview" class="admin-tab-btn" type="button">Review Players</button>
+        </div>
+        <div id="adminTabManagePanel">
+          <h5 class="mb-3 d-flex justify-content-between align-items-center">
+            Admin Panel
+            <button id="logoutBtn" class="btn btn-outline-secondary btn-sm">Logout</button>
+          </h5>
+          <form id="adminActionsForm" class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+            <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
+          </form>
+          <form id="addPlayerForm" class="input-group mb-2" autocomplete="off">
+            <input class="form-control" name="teamName" placeholder="Team" required>
+            <input class="form-control" name="playerName" placeholder="Player name" required>
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-person-plus"></i> Add Player</button>
+          </form>
+          <form id="removePlayerForm" class="input-group mb-2" autocomplete="off">
+            <input class="form-control" name="teamName" placeholder="Team" required>
+            <input class="form-control" name="playerName" placeholder="Player name" required>
+            <button class="btn btn-outline-danger" type="submit"><i class="bi bi-person-dash"></i> Remove Player</button>
+          </form>
+          <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
+            <input class="form-control" name="teamA" placeholder="Team A" required>
+            <input class="form-control" name="teamB" placeholder="Team B" required>
+            <input class="form-control" name="matchDateTime" type="datetime-local" required>
+            <button class="btn btn-outline-success" type="submit"><i class="bi bi-calendar-plus"></i> Create Match</button>
+          </form>
+          <form id="updateMatchScoreForm" class="input-group mb-2" autocomplete="off">
+            <input class="form-control" name="matchId" placeholder="Match ID" required>
+            <input class="form-control" name="playerName" placeholder="Player" required>
+            <input class="form-control" name="runs" type="number" placeholder="Runs">
+            <input class="form-control" name="wickets" type="number" placeholder="Wickets">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-pencil"></i> Update Score</button>
+          </form>
+          <form id="setMatchResultForm" class="input-group mb-2" autocomplete="off">
+            <input class="form-control" name="matchId" placeholder="Match ID" required>
+            <input class="form-control" name="winner" placeholder="Winning Team" required>
+            <button class="btn btn-outline-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
+          </form>
+        </div>
+        <div id="adminTabReviewPanel" class="d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Review Added Players</h5>
+            <button id="logoutBtn2" class="btn btn-outline-secondary btn-sm">Logout</button>
+          </div>
+          <input id="adminPlayerSearch" class="admin-player-search" type="text" placeholder="Search player/team...">
+          <div style="max-height: 310px; overflow-y: auto;">
+            <table class="admin-review-table">
+              <thead>
+                <tr>
+                  <th>Player Name</th>
+                  <th>Team</th>
+                  <th>Runs</th>
+                  <th>Wickets</th>
+                </tr>
+              </thead>
+              <tbody id="adminReviewPlayersBody">
+                <tr><td colspan="4" class="text-center">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -271,6 +347,21 @@
       loadStats();
     };
 
+    // ADMIN TABS LOGIC
+    document.getElementById('adminTabManage').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('adminTabReview').classList.remove('active');
+      document.getElementById('adminTabManagePanel').classList.remove('d-none');
+      document.getElementById('adminTabReviewPanel').classList.add('d-none');
+    };
+    document.getElementById('adminTabReview').onclick = function() {
+      this.classList.add('active');
+      document.getElementById('adminTabManage').classList.remove('active');
+      document.getElementById('adminTabReviewPanel').classList.remove('d-none');
+      document.getElementById('adminTabManagePanel').classList.add('d-none');
+      loadAdminReviewPlayers();
+    };
+
     // ADMIN UI LOGIC
     let isAdmin = false;
     const adminLoginModal = document.getElementById('adminPanelModal');
@@ -296,7 +387,8 @@
         showToast('Invalid login', 'danger');
       }
     };
-    document.getElementById("logoutBtn").onclick = async () => {
+    // Both "logout" buttons
+    document.getElementById("logoutBtn").onclick = document.getElementById("logoutBtn2").onclick = async () => {
       await fetch('/api/logout', { method: 'POST' });
       isAdmin = false;
       adminPanelLoginBox.classList.remove('d-none');
@@ -309,6 +401,7 @@
           showToast('Undo successful!', 'warning');
           loadStats();
           loadSchedule();
+          if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
         } else showToast(data.error, 'danger');
       });
     };
@@ -318,6 +411,7 @@
           showToast('Redo successful!', 'info');
           loadStats();
           loadSchedule();
+          if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
         } else showToast(data.error, 'danger');
       });
     };
@@ -330,6 +424,7 @@
         showToast('Player added', 'success');
         loadStats();
         loadSchedule();
+        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
       } else {
         const r = await res.json();
         showToast(r.error || 'Error', 'danger');
@@ -344,6 +439,7 @@
         showToast('Player removed', 'success');
         loadStats();
         loadSchedule();
+        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
       } else {
         const r = await res.json();
         showToast(r.error || 'Error', 'danger');
@@ -372,6 +468,7 @@
         showToast('Score updated', 'success');
         loadStats();
         loadSchedule();
+        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
       } else {
         const r = await res.json();
         showToast(r.error || 'Error', 'danger');
@@ -386,12 +483,12 @@
         showToast('Result set', 'success');
         loadStats();
         loadSchedule();
+        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
       } else {
         const r = await res.json();
         showToast(r.error || 'Error', 'danger');
       }
     };
-    // Remove match as admin
     document.addEventListener('click', async function(e) {
       if (e.target.classList.contains('remove-match-btn')) {
         const matchId = e.target.dataset.matchId;
@@ -411,6 +508,48 @@
         });
       }
     });
+
+    // ADMIN PLAYER REVIEW: SEARCH & TABLE
+    async function loadAdminReviewPlayers() {
+      const tbody = document.getElementById('adminReviewPlayersBody');
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Loading...</td></tr>`;
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      let allPlayers = [];
+      Object.entries(data.teams).forEach(([team, players]) => {
+        players.forEach(p => allPlayers.push({ ...p, team }));
+      });
+      // Attach search filter
+      const searchInput = document.getElementById('adminPlayerSearch');
+      searchInput.value = '';
+      let shownPlayers = allPlayers;
+      function renderTable(players) {
+        if (!players.length) {
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No players found.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = players.map(p => `
+          <tr>
+            <td>${p.playerName}</td>
+            <td>${p.team}</td>
+            <td>${p.runs}</td>
+            <td>${p.wickets}</td>
+          </tr>
+        `).join('');
+      }
+      searchInput.oninput = function() {
+        const q = this.value.trim().toLowerCase();
+        shownPlayers = allPlayers.filter(p =>
+          p.playerName.toLowerCase().includes(q) ||
+          p.team.toLowerCase().includes(q)
+        );
+        renderTable(shownPlayers);
+      };
+      // Sort by team, then player
+      allPlayers.sort((a,b) => a.team.localeCompare(b.team) || a.playerName.localeCompare(b.playerName));
+      renderTable(allPlayers);
+    }
+
     // Toast
     function showToast(msg, type='info') {
       const t = document.createElement('div');
