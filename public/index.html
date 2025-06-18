@@ -1,59 +1,166 @@
-<!--
-  Only the changed/added parts are shown here. Merge with your previous index.html for a complete file.
--->
-<!-- ...admin panel, above forms... -->
-<form id="adminActionsForm" class="d-flex gap-2 mb-3">
-  <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-  <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GNPL Cricket Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background: #f4f8fc; }
+    .stats-section { margin-top: 2rem; }
+    .highlight { color: #007bff; font-weight: bold;}
+    .stats-list li { font-size: 1.13rem; margin-bottom: 0.4em;}
+  </style>
+</head>
+<body>
+<div class="container py-3">
+  <h1 class="mb-3 text-center fw-bold">GNPL Cricket Dashboard</h1>
 
-<!-- ...stats section... -->
-<div class="stats-section mx-auto" style="max-width: 1050px;">
-  <h3 class="mb-3">Tournament Overview</h3>
-  <div class="row mb-3 g-3">
-    <div class="col-md-6">
-      <h5 class="text-primary mb-2">Upcoming Matches</h5>
-      <div id="upcomingMatchesList" class="row g-2"></div>
-    </div>
-    <div class="col-md-6">
-      <h5 class="text-success mb-2">Recent Results</h5>
-      <div id="recentResultsList" class="row g-2"></div>
+  <!-- Admin login panel -->
+  <div id="adminLoginPanel" class="card mx-auto my-3" style="max-width:400px;">
+    <div class="card-body">
+      <h5 class="card-title">Admin Login</h5>
+      <form id="adminLoginForm">
+        <div class="mb-2">
+          <input class="form-control" name="username" placeholder="Username" required>
+        </div>
+        <div class="mb-2">
+          <input class="form-control" name="password" type="password" placeholder="Password" required>
+        </div>
+        <button class="btn btn-primary w-100">Login</button>
+      </form>
     </div>
   </div>
-  <div class="row mb-3 g-3">
-    <div class="col-md-6">
-      <h5 class="text-warning mb-2">Points Table</h5>
-      <table class="table table-striped table-hover shadow" id="pointsTable">
-        <thead class="table-dark">
-          <tr>
-            <th>Team</th><th>Played</th><th>Won</th><th>Lost</th><th>Points</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+  <div id="adminPanel" class="card my-3 d-none">
+    <div class="card-body">
+      <h5 class="card-title d-flex justify-content-between align-items-center">
+        Admin Panel
+        <button id="logoutBtn" class="btn btn-danger btn-sm">Logout</button>
+      </h5>
+      <form id="adminActionsForm" class="d-flex gap-2 mb-3">
+        <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+        <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
+      </form>
+      <form id="addTeamForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="teamName" placeholder="Add new team" required>
+        <button class="btn btn-success" type="submit"><i class="bi bi-plus-circle"></i> Add Team</button>
+      </form>
+      <form id="addPlayerForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="teamName" placeholder="Team" required>
+        <input class="form-control" name="playerName" placeholder="Player name" required>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-person-plus"></i> Add Player</button>
+      </form>
+      <form id="removePlayerForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="teamName" placeholder="Team" required>
+        <input class="form-control" name="playerName" placeholder="Player name" required>
+        <button class="btn btn-danger" type="submit"><i class="bi bi-person-dash"></i> Remove Player</button>
+      </form>
+      <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="teamA" placeholder="Team A" required>
+        <input class="form-control" name="teamB" placeholder="Team B" required>
+        <input class="form-control" name="matchDateTime" type="datetime-local" required>
+        <button class="btn btn-warning" type="submit"><i class="bi bi-calendar-plus"></i> Create Match</button>
+      </form>
+      <form id="updateMatchScoreForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="matchId" placeholder="Match ID" required>
+        <input class="form-control" name="playerName" placeholder="Player" required>
+        <input class="form-control" name="runs" type="number" placeholder="Runs">
+        <input class="form-control" name="wickets" type="number" placeholder="Wickets">
+        <button class="btn btn-success" type="submit"><i class="bi bi-pencil"></i> Update Score</button>
+      </form>
+      <form id="setMatchResultForm" class="input-group mb-2" autocomplete="off">
+        <input class="form-control" name="matchId" placeholder="Match ID" required>
+        <input class="form-control" name="winner" placeholder="Winning Team" required>
+        <button class="btn btn-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
+      </form>
     </div>
-    <div class="col-md-6">
-      <div class="row g-2">
-        <div class="col-12">
-          <h5 class="text-info mb-2">Top 5 Batters</h5>
-          <div id="topBattersList" class="row g-2"></div>
-        </div>
-        <div class="col-12 mt-3">
-          <h5 class="text-info mb-2">Top 5 Bowlers</h5>
-          <div id="topBowlersList" class="row g-2"></div>
+  </div>
+
+  <!-- Stats display -->
+  <div class="stats-section mx-auto" style="max-width: 1050px;">
+    <h3 class="mb-3">Tournament Overview</h3>
+    <div class="row mb-3 g-3">
+      <div class="col-md-6">
+        <h5 class="text-primary mb-2">Upcoming Matches</h5>
+        <div id="upcomingMatchesList" class="row g-2"></div>
+      </div>
+      <div class="col-md-6">
+        <h5 class="text-success mb-2">Recent Results</h5>
+        <div id="recentResultsList" class="row g-2"></div>
+      </div>
+    </div>
+    <div class="row mb-3 g-3">
+      <div class="col-md-6">
+        <h5 class="text-warning mb-2">Points Table</h5>
+        <table class="table table-striped table-hover shadow" id="pointsTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Team</th><th>Played</th><th>Won</th><th>Lost</th><th>Points</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="col-md-6">
+        <div class="row g-2">
+          <div class="col-12">
+            <h5 class="text-info mb-2">Top 5 Batters</h5>
+            <div id="topBattersList" class="row g-2"></div>
+          </div>
+          <div class="col-12 mt-3">
+            <h5 class="text-info mb-2">Top 5 Bowlers</h5>
+            <div id="topBowlersList" class="row g-2"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row mb-3">
-    <div class="col-12">
-      <h5 class="text-secondary mb-2">Teams & Players</h5>
-      <div class="accordion" id="teamsAccordion"></div>
+    <div class="row mb-3">
+      <div class="col-12">
+        <h5 class="text-secondary mb-2">Teams & Players</h5>
+        <div class="accordion" id="teamsAccordion"></div>
+      </div>
     </div>
   </div>
 </div>
-
+<div id="toast" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  function showToast(msg, type='info') {
+    const t = document.createElement('div');
+    t.className = `toast align-items-center text-bg-${type} border-0`;
+    t.role = 'alert'; t.innerHTML = `<div class="d-flex"><div class="toast-body">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+    document.getElementById('toast').appendChild(t);
+    new bootstrap.Toast(t, { delay: 2500 }).show();
+    t.addEventListener('hidden.bs.toast', () => t.remove());
+  }
+
+  // ADMIN LOGIN/LOGOUT
+  let isAdmin = false;
+  document.getElementById('adminLoginForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      isAdmin = true;
+      document.getElementById('adminLoginPanel').classList.add('d-none');
+      document.getElementById('adminPanel').classList.remove('d-none');
+      showToast('Admin logged in', 'success');
+      loadStats();
+    } else {
+      showToast('Invalid login', 'danger');
+    }
+  };
+  document.getElementById('logoutBtn').onclick = async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    isAdmin = false;
+    document.getElementById('adminPanel').classList.add('d-none');
+    document.getElementById('adminLoginPanel').classList.remove('d-none');
+    showToast('Logged out', 'secondary');
+  };
+
+  // Undo/Redo
   document.getElementById('undoBtn').onclick = async () => {
     await fetch('/api/admin-undo', { method: 'POST' }).then(r => r.json()).then(data => {
       if (data.success) {
@@ -71,11 +178,87 @@
     });
   };
 
+  // Admin Forms
+  document.getElementById('addTeamForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const teamName = e.target.teamName.value.trim();
+    if (!teamName) return;
+    if (await fetch(`/api/players/${encodeURIComponent(teamName)}`).then(r=>r.json()).then(d=>d.players.length>0)) {
+      showToast('Team already exists', 'danger'); return;
+    }
+    // No direct add team (add first player to create it)
+    showToast('Add at least one player to create team.', 'info');
+  };
+  document.getElementById('addPlayerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/addPlayer', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      showToast('Player added', 'success');
+      loadStats();
+    } else {
+      const r = await res.json();
+      showToast(r.error || 'Error', 'danger');
+    }
+  };
+  document.getElementById('removePlayerForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/removePlayer', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      showToast('Player removed', 'success');
+      loadStats();
+    } else {
+      const r = await res.json();
+      showToast(r.error || 'Error', 'danger');
+    }
+  };
+  document.getElementById('createMatchForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/createMatch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      showToast('Match created', 'success');
+      loadStats();
+    } else {
+      const r = await res.json();
+      showToast(r.error || 'Error', 'danger');
+    }
+  };
+  document.getElementById('updateMatchScoreForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/updateMatchScore', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      showToast('Score updated', 'success');
+      loadStats();
+    } else {
+      const r = await res.json();
+      showToast(r.error || 'Error', 'danger');
+    }
+  };
+  document.getElementById('setMatchResultForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const data = Object.fromEntries(fd.entries());
+    const res = await fetch('/api/setMatchResult', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    if (res.ok) {
+      showToast('Result set', 'success');
+      loadStats();
+    } else {
+      const r = await res.json();
+      showToast(r.error || 'Error', 'danger');
+    }
+  };
+
   // Remove match (admin-only, shown on each match card)
   document.addEventListener('click', async function(e) {
     if (e.target.classList.contains('remove-match-btn')) {
       const matchId = e.target.dataset.matchId;
-      // Save match object for undo
       const resStat = await fetch('/api/stats');
       const dataStat = await resStat.json();
       const matchObj = dataStat.matches.find(m => m.matchId === matchId);
@@ -92,11 +275,11 @@
     }
   });
 
+  // Load stats and update UI
   async function loadStats() {
     const res = await fetch('/api/stats');
     const data = await res.json();
-
-    // Upcoming matches - as cards
+    // Upcoming matches
     document.getElementById('upcomingMatchesList').innerHTML = data.upcomingMatches.length
       ? data.upcomingMatches.map(m => `
         <div class="col-12">
@@ -106,7 +289,7 @@
               <p class="card-text">
                 <i class="bi bi-calendar-event"></i> ${m.matchDateTime ? new Date(m.matchDateTime).toLocaleString() : 'Not set'}
               </p>
-              ${document.getElementById('adminPanel') && !document.getElementById('adminPanel').classList.contains('d-none')
+              ${isAdmin
                 ? `<button class="btn btn-sm btn-outline-danger remove-match-btn" data-match-id="${m.matchId}"><i class="bi bi-x-circle"></i> Remove</button>`
                 : ''}
             </div>
@@ -114,8 +297,7 @@
         </div>
       `).join('')
       : '<div class="col-12"><div class="text-muted">No upcoming matches</div></div>';
-
-    // Recent results - as cards
+    // Recent results
     document.getElementById('recentResultsList').innerHTML = data.finishedMatches.length
       ? data.finishedMatches.map(m => `
         <div class="col-12">
@@ -124,7 +306,7 @@
               <h5 class="card-title"><span class="badge bg-success">${m.matchId}</span> <b>${m.teamA}</b> vs <b>${m.teamB}</b></h5>
               <p class="card-text"><i class="bi bi-trophy"></i> Winner: <span class="fw-bold text-success">${m.winner}</span></p>
               <p class="card-text"><i class="bi bi-calendar"></i> ${m.matchDateTime ? new Date(m.matchDateTime).toLocaleDateString() : ''}</p>
-              ${document.getElementById('adminPanel') && !document.getElementById('adminPanel').classList.contains('d-none')
+              ${isAdmin
                 ? `<button class="btn btn-sm btn-outline-danger remove-match-btn" data-match-id="${m.matchId}"><i class="bi bi-x-circle"></i> Remove</button>`
                 : ''}
             </div>
@@ -132,8 +314,7 @@
         </div>
       `).join('')
       : '<div class="col-12"><div class="text-muted">No recent results</div></div>';
-
-    // Top Batters - as cards with progress bars
+    // Top Batters
     document.getElementById('topBattersList').innerHTML = data.topBatters.length
       ? data.topBatters.map(b => `
         <div class="col-12">
@@ -154,8 +335,7 @@
         </div>
       `).join('')
       : '<div class="col-12"><div class="text-muted">No data</div></div>';
-
-    // Top Bowlers - as cards with progress bars
+    // Top Bowlers
     document.getElementById('topBowlersList').innerHTML = data.topBowlers.length
       ? data.topBowlers.map(b => `
         <div class="col-12">
@@ -176,7 +356,6 @@
         </div>
       `).join('')
       : '<div class="col-12"><div class="text-muted">No data</div></div>';
-
     // Points table
     const ptbody = document.querySelector('#pointsTable tbody');
     ptbody.innerHTML = data.pointsTable.length
@@ -189,8 +368,7 @@
           <td class="fw-bold">${row.points}</td>
         </tr>`).join('')
       : '<tr><td colspan="5" class="text-muted text-center">No data</td></tr>';
-
-    // Teams & Players - as before, or use cards for players if you wish
+    // Teams & Players accordion
     let teamsHtml = '';
     let idx = 0;
     for (let [team, players] of Object.entries(data.teams)) {
@@ -213,5 +391,7 @@
     }
     document.getElementById('teamsAccordion').innerHTML = teamsHtml;
   }
-  // ... (rest of your JS unchanged) ...
+  loadStats();
 </script>
+</body>
+</html>

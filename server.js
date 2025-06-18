@@ -21,16 +21,14 @@ let teams = {}; // { teamName: [{playerName, runs, wickets}] }
 let matches = []; // [{matchId, teamA, teamB, matchDateTime, played, winner, scores: {playerName: {runs, wickets}}] }
 let pointsTable = {}; // { teamName: { played, won, lost, points } }
 
-// History stacks for undo/redo (simple approach)
+// Undo/Redo stacks
 let adminHistory = [];
 let adminRedo = [];
-
 function pushHistory(action, payload) {
   adminHistory.push({ action, payload: JSON.parse(JSON.stringify(payload)) });
   if (adminHistory.length > 50) adminHistory.shift();
   adminRedo = [];
 }
-
 app.post('/api/admin-undo', requireAdmin, (req, res) => {
   if (adminHistory.length === 0) return res.status(400).json({ error: 'No actions to undo.' });
   const { action, payload } = adminHistory.pop();
@@ -38,7 +36,6 @@ app.post('/api/admin-undo', requireAdmin, (req, res) => {
   applyUndo(action, payload);
   res.json({ success: true });
 });
-
 app.post('/api/admin-redo', requireAdmin, (req, res) => {
   if (adminRedo.length === 0) return res.status(400).json({ error: 'No actions to redo.' });
   const { action, payload } = adminRedo.pop();
@@ -46,7 +43,6 @@ app.post('/api/admin-redo', requireAdmin, (req, res) => {
   applyRedo(action, payload);
   res.json({ success: true });
 });
-
 function applyUndo(action, payload) {
   switch (action) {
     case 'addPlayer':
@@ -153,7 +149,7 @@ function applyRedo(action, payload) {
   }
 }
 
-// --- AUTHENTICATION ---
+// --- AUTH ---
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
@@ -164,19 +160,17 @@ app.post('/api/login', (req, res) => {
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
-
 app.post('/api/logout', (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true });
   });
 });
-
 function requireAdmin(req, res, next) {
   if (req.session.isAdmin) return next();
   res.status(403).json({ error: 'Admin authentication required.' });
 }
 
-// --- TEAM & PLAYER MANAGEMENT ---
+// --- TEAM & PLAYER ---
 app.post('/api/addPlayer', requireAdmin, (req, res, next) => {
   const { teamName, playerName } = req.body;
   pushHistory('addPlayer', { teamName, playerName });
@@ -191,7 +185,6 @@ app.post('/api/addPlayer', requireAdmin, (req, res, next) => {
   teams[teamName].push({ playerName, runs: 0, wickets: 0 });
   res.json({ success: true, players: teams[teamName] });
 });
-
 app.post('/api/removePlayer', requireAdmin, (req, res, next) => {
   const { teamName, playerName } = req.body;
   const playerObj = teams[teamName]?.find(p => p.playerName === playerName);
@@ -206,14 +199,13 @@ app.post('/api/removePlayer', requireAdmin, (req, res, next) => {
   teams[teamName].splice(idx, 1);
   res.json({ success: true, players: teams[teamName] });
 });
-
 app.get('/api/players/:teamName', requireAdmin, (req, res) => {
   const { teamName } = req.params;
   if (!teams[teamName]) return res.json({ players: [] });
   res.json({ players: teams[teamName] });
 });
 
-// --- MATCH MANAGEMENT ---
+// --- MATCH ---
 app.post('/api/createMatch', requireAdmin, (req, res, next) => {
   next();
 }, (req, res) => {
@@ -233,7 +225,6 @@ app.post('/api/createMatch', requireAdmin, (req, res, next) => {
   pushHistory('addMatch', { matchId, matchObj });
   res.json({ matchId });
 });
-
 app.post('/api/removeMatch', requireAdmin, (req, res, next) => {
   const { matchId, matchObj } = req.body;
   pushHistory('removeMatch', { matchObj });
@@ -243,7 +234,6 @@ app.post('/api/removeMatch', requireAdmin, (req, res, next) => {
   matches = matches.filter(m => m.matchId !== matchId);
   res.json({ success: true });
 });
-
 app.post('/api/updateMatchScore', requireAdmin, (req, res, next) => {
   const { matchId, playerName, runs, wickets } = req.body;
   const match = matches.find(m => m.matchId === matchId);
@@ -257,7 +247,6 @@ app.post('/api/updateMatchScore', requireAdmin, (req, res, next) => {
   if (!match.scores[playerName]) match.scores[playerName] = { runs: 0, wickets: 0 };
   match.scores[playerName].runs += Number(runs) || 0;
   match.scores[playerName].wickets += Number(wickets) || 0;
-
   for (const team of [match.teamA, match.teamB]) {
     if (teams[team]) {
       const player = teams[team].find(p => p.playerName === playerName);
@@ -269,7 +258,6 @@ app.post('/api/updateMatchScore', requireAdmin, (req, res, next) => {
   }
   res.json({ success: true });
 });
-
 app.post('/api/setMatchResult', requireAdmin, (req, res, next) => {
   const { matchId, winner } = req.body;
   pushHistory('setMatchResult', { matchId, winner });
@@ -298,19 +286,12 @@ app.get('/api/stats', (req, res) => {
   Object.entries(teams).forEach(([team, players]) => {
     players.forEach(p => allPlayers.push({ ...p, team }));
   });
-  const topBatters = [...allPlayers]
-    .sort((a, b) => b.runs - a.runs)
-    .slice(0, 5);
-  const topBowlers = [...allPlayers]
-    .sort((a, b) => b.wickets - a.wickets)
-    .slice(0, 5);
-
+  const topBatters = [...allPlayers].sort((a, b) => b.runs - a.runs).slice(0, 5);
+  const topBowlers = [...allPlayers].sort((a, b) => b.wickets - a.wickets).slice(0, 5);
   const pointsArr = Object.entries(pointsTable).map(([team, stats]) => ({ team, ...stats }));
   pointsArr.sort((a, b) => b.points - a.points || b.won - a.won);
-
   const upcoming = matches.filter(m => !m.played).sort((a, b) => new Date(a.matchDateTime) - new Date(b.matchDateTime));
   const finished = matches.filter(m => m.played).sort((a, b) => new Date(b.matchDateTime) - new Date(a.matchDateTime));
-
   res.json({
     teams,
     matches,
@@ -321,13 +302,11 @@ app.get('/api/stats', (req, res) => {
     finishedMatches: finished,
   });
 });
-
 app.get('/api/team/:teamName', (req, res) => {
   const { teamName } = req.params;
   if (!teams[teamName]) return res.status(404).json({ error: 'Team not found.' });
   res.json({ team: teamName, players: teams[teamName] });
 });
-
 app.get('/api/player/:teamName/:playerName', (req, res) => {
   const { teamName, playerName } = req.params;
   if (!teams[teamName]) return res.status(404).json({ error: 'Team not found.' });
