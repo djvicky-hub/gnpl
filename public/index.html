@@ -262,20 +262,22 @@
             Admin Panel
             <button id="logoutBtn" class="btn btn-outline-secondary btn-sm">Logout</button>
           </h5>
-          <form id="adminActionsForm" class="d-flex gap-2 mb-3">
-            <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
-            <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
-          </form>
-          <form id="addPlayerForm" class="input-group mb-2" autocomplete="off">
-            <input class="form-control" name="teamName" placeholder="Team" required>
-            <input class="form-control" name="playerName" placeholder="Player name" required>
-            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-person-plus"></i> Add Player</button>
-          </form>
-          <form id="removePlayerForm" class="input-group mb-2" autocomplete="off">
-            <input class="form-control" name="teamName" placeholder="Team" required>
-            <input class="form-control" name="playerName" placeholder="Player name" required>
-            <button class="btn btn-outline-danger" type="submit"><i class="bi bi-person-dash"></i> Remove Player</button>
-          </form>
+          <!-- Bulk Add Players -->
+          <div class="mb-3">
+            <label for="bulkAddTeamName" class="form-label">Team</label>
+            <input id="bulkAddTeamName" class="form-control mb-2" placeholder="Team name">
+            <label for="bulkAddPlayerNames" class="form-label">Player names (comma or newline separated)</label>
+            <textarea id="bulkAddPlayerNames" class="form-control mb-2" placeholder="e.g. John Doe, Jane Smith&#10;or one per line"></textarea>
+            <button class="btn btn-outline-primary w-100" id="bulkAddPlayersBtn" type="button">
+              <i class="bi bi-person-plus"></i> Add Players
+            </button>
+          </div>
+          <!-- Player List Per Team -->
+          <div class="mb-3">
+            <label class="form-label">Players by Team</label>
+            <select id="playerListTeamSelect" class="form-select mb-2"></select>
+            <ul class="list-group" id="playerListUl"></ul>
+          </div>
           <form id="createMatchForm" class="input-group mb-2" autocomplete="off">
             <input class="form-control" name="teamA" placeholder="Team A" required>
             <input class="form-control" name="teamB" placeholder="Team B" required>
@@ -293,6 +295,10 @@
             <input class="form-control" name="matchId" placeholder="Match ID" required>
             <input class="form-control" name="winner" placeholder="Winning Team" required>
             <button class="btn btn-outline-success" type="submit"><i class="bi bi-trophy"></i> Set Result</button>
+          </form>
+          <form id="adminActionsForm" class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-outline-warning" id="undoBtn"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+            <button type="button" class="btn btn-outline-info" id="redoBtn"><i class="bi bi-arrow-clockwise"></i> Redo</button>
           </form>
         </div>
         <div id="adminTabReviewPanel" class="d-none">
@@ -383,6 +389,7 @@
         showToast('Admin logged in', 'success');
         loadSchedule();
         loadStats();
+        populatePlayerListTeams();
       } else {
         showToast('Invalid login', 'danger');
       }
@@ -415,35 +422,66 @@
         } else showToast(data.error, 'danger');
       });
     };
-    document.getElementById('addPlayerForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const data = Object.fromEntries(fd.entries());
-      const res = await fetch('/api/addPlayer', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-      if (res.ok) {
-        showToast('Player added', 'success');
-        loadStats();
-        loadSchedule();
-        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
-      } else {
-        const r = await res.json();
-        showToast(r.error || 'Error', 'danger');
+    // Bulk Add Players
+    document.getElementById('bulkAddPlayersBtn').onclick = async function() {
+      const team = document.getElementById('bulkAddTeamName').value.trim();
+      const names = document.getElementById('bulkAddPlayerNames').value
+        .split(/[\n,]+/)
+        .map(x => x.trim()).filter(Boolean);
+      if (!team || names.length === 0) {
+        showToast('Team and at least one player required', 'danger');
+        return;
       }
+      let ok = 0, fail = 0;
+      for (const n of names) {
+        const res = await fetch('/api/addPlayer', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ teamName: team, playerName: n })
+        });
+        if (res.ok) ok++; else fail++;
+      }
+      showToast(`Added: ${ok}, Failed: ${fail}`, ok ? 'success' : 'danger');
+      loadStats();
+      if (document.getElementById('playerListTeamSelect').value === team) loadPlayerListUI(team);
+      populatePlayerListTeams();
     };
-    document.getElementById('removePlayerForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const data = Object.fromEntries(fd.entries());
-      const res = await fetch('/api/removePlayer', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-      if (res.ok) {
-        showToast('Player removed', 'success');
-        loadStats();
-        loadSchedule();
-        if (!document.getElementById('adminTabReviewPanel').classList.contains('d-none')) loadAdminReviewPlayers();
-      } else {
-        const r = await res.json();
-        showToast(r.error || 'Error', 'danger');
-      }
+    // Player List Per Team
+    async function loadPlayerListUI(team) {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      const players = data.teams[team] || [];
+      const ul = document.getElementById('playerListUl');
+      ul.innerHTML = players.map(p => `
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          ${p.playerName}
+          <button class="btn btn-sm btn-outline-danger" onclick="removePlayer('${team}','${p.playerName}')">
+            <i class="bi bi-trash"></i>
+          </button>
+        </li>
+      `).join('') || `<li class="list-group-item text-muted">No players</li>`;
+    }
+    // Populate team selector and handle change
+    async function populatePlayerListTeams() {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      const sel = document.getElementById('playerListTeamSelect');
+      sel.innerHTML = Object.keys(data.teams).map(t =>
+        `<option value="${t}">${t}</option>`
+      ).join('');
+      sel.onchange = () => loadPlayerListUI(sel.value);
+      if (sel.value) loadPlayerListUI(sel.value);
+    }
+    window.removePlayer = async (team, name) => {
+      await fetch('/api/removePlayer', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ teamName: team, playerName: name })
+      });
+      showToast('Player removed', 'warning');
+      loadStats();
+      loadPlayerListUI(team);
+      populatePlayerListTeams();
     };
     document.getElementById('createMatchForm').onsubmit = async (e) => {
       e.preventDefault();
@@ -508,7 +546,6 @@
         });
       }
     });
-
     // ADMIN PLAYER REVIEW: SEARCH & TABLE
     async function loadAdminReviewPlayers() {
       const tbody = document.getElementById('adminReviewPlayersBody');
